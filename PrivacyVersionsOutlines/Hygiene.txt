@@ -1,0 +1,9 @@
+Hygiene is the first level of privacy and anonimity screening.
+
+The goal: To constantly have fast reliable clear web focus while maintaining privacy and some anonimity
+
+Possible Toolset
+
+Firefox + Duck Duck Go + Ublock Orgin
+Solid VPN Choice: Cloudfare Warp or Mullvad
+Bitwarden Password Security
