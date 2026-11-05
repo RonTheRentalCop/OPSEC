@@ -119,8 +119,21 @@ Note: I2P handles hidden services and messaging inside its own network. Tor hand
 
 Note: PGP Communication would not be a bad idea although I'm still unsure. Some protocalls are uncracked but it is inconvient but still might be suitible. Still leave behind timestamp subjects email subject line and timestamps. 
 
-If you choose to run it go with 4096-bit RSA keys or Ed25519/Curve25519 Elliptic Curve cryptography
+Decision: the P2P messaging service uses 4096-bit RSA keys. See [P2P Messaging Service](#p2p-messaging-service-planned) below.
 
+
+## P2P Messaging Service (planned)
+A peer-to-peer encrypted messenger with no user IDs and no central servers, routed over Tor or Yggdrasil.
+
+### Encryption decision: RSA-4096
+- Identity keys: 4096-bit RSA. Each user's long-term key signs and verifies their identity.
+- Message encryption: the Double Ratchet algorithm gives every message its own AES-256 key and deletes old keys, which provides forward secrecy.
+- Ratchet key exchange: the per-message key exchanges inside the ratchet use X25519, because generating a fresh RSA-4096 key for every message takes too long (from half a second to several seconds each). The RSA-4096 identity key signs these exchanges, so they stay tied to the user's identity.
+
+### Known risks (accepted)
+- Quantum computing: a large enough quantum computer could break both RSA and elliptic curve cryptography. This risk is accepted for now. Public-key crypto used across the internet and in cryptocurrency faces the same threat, and no practical attack exists yet. A post-quantum key exchange such as ML-KEM can be added later if needed.
+- Performance: RSA-4096 keys are about 512 bytes and private-key operations are roughly 100 to 200 times slower than Ed25519. Because the keys are used only for identity, users won't notice the difference.
+- Metadata: encryption protects message content only. Hiding who talks to whom depends on the network layer (Tor or Yggdrasil, no user IDs, and rotating queue IDs).
 
 ## License
 This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](./LICENSE) file for the full text.
