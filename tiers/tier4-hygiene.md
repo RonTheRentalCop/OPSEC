@@ -14,7 +14,7 @@ Threat model:
 - Search: DuckDuckGo, set as the default in Firefox.
 - Passwords: Bitwarden. Browser extension installed; prompt the user to create a vault and turn on two-factor login.
 - Two-factor codes: Ente Auth or Aegis (Android). Avoid SMS codes where possible.
-- Encrypted DNS: Quad9, using DNS over HTTPS in Firefox and at the system level.
+- Encrypted DNS: Quad9, using DNS over HTTPS in Firefox and at the system level. At this tier Firefox falls back to your network's ordinary DNS if Quad9 cannot be reached, so sites keep loading. From Tier 3 the fallback is off.
 - Updates: automatic security updates on. Windows Update, unattended-upgrades (Debian, Ubuntu), dnf-automatic (Fedora), Software Update (macOS).
 - Firewall: on, blocking unsolicited incoming connections. Windows Defender Firewall, ufw, firewalld or the macOS firewall.
 - Malware protection: Microsoft Defender (Windows) or XProtect (macOS), with real-time protection on. No third-party antivirus.

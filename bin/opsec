@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-VERSION="0.0.1 (early development)"
+VERSION="0.1.0 (early development)"
 
 self="${BASH_SOURCE[0]}"
 while [ -L "$self" ]; do
@@ -24,13 +24,16 @@ Tier 0 is the most locked down. Tier 4 is the everyday starting point.
 Usage:
   opsec tiers      Explain the five tiers and who each one is for
   opsec tier <n>   Show everything in one tier, from 0 to 4
-  opsec status     Check which protections are on        (not built yet)
-  opsec up <n>     Apply a tier, from 0 to 4             (not built yet)
-  opsec down       Undo the changes OPSEC made           (not built yet)
+  opsec up         Pick a tier, review the changes, confirm, then apply
+  opsec up <n>     Same, for tier n (add --dry-run to only see the plan)
+  opsec status     Check which protections are on (add --online to test the VPN)
+  opsec down       Undo the settings files OPSEC wrote
+  opsec vm         Build, start or delete the sealed Tor-only virtual machine
   opsec version    Show the version
   opsec help       Show this message
 
-This early version makes no changes to your computer.
+Only 'opsec up', 'opsec down' and 'opsec vm' change your computer, and
+each one asks first. OPSEC keeps no log of what you run.
 EOF
 }
 
@@ -38,8 +41,8 @@ show_tiers() {
   cat <<'EOF'
 Tier 0  Lockdown    For people at serious risk. Separates everything you do
                     and leaves nothing behind.
-Tier 1  Anonymous   Hides who you are from the websites you visit and from
-                    anyone watching your connection.
+Tier 1  Anonymous   A sealed virtual machine where everything goes through
+                    Tor. Hides who you are from websites and your network.
 Tier 2  Hardened    Makes the computer much harder to break into, even if you
                     open a bad file or plug in a bad USB stick.
 Tier 3  Private     Stops your internet provider, public Wi-Fi and advertisers
@@ -71,18 +74,34 @@ show_tier() {
   cat "$file"
 }
 
-not_built() {
-  echo "'opsec $1' is not built yet. Nothing was changed on your computer."
-  echo "Follow progress at https://github.com/RonTheRentalCop/OPSEC"
-  exit 2
-}
-
 case "${1:-help}" in
   help|-h|--help)       show_help ;;
   version|-v|--version) echo "opsec $VERSION" ;;
   tiers)                show_tiers ;;
   tier)                 show_tier "${2:-}" ;;
-  status|up|down)       not_built "$1" ;;
+  up)
+    shift
+    . "$ROOT_DIR/lib/engine.sh"
+    opsec_up "$@"
+    ;;
+  vm)
+    shift
+    . "$ROOT_DIR/lib/engine.sh"
+    . "$ROOT_DIR/lib/vm.sh"
+    opsec_vm "$@"
+    ;;
+  status)
+    shift
+    . "$ROOT_DIR/lib/engine.sh"
+    . "$ROOT_DIR/lib/status.sh"
+    opsec_status "$@"
+    ;;
+  down)
+    shift
+    . "$ROOT_DIR/lib/engine.sh"
+    . "$ROOT_DIR/lib/down.sh"
+    opsec_down "$@"
+    ;;
   *)
     echo "Unknown command: $1" >&2
     echo "Run 'opsec help' to see what is available." >&2

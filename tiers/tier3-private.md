@@ -17,7 +17,7 @@ Threat model:
 
 - Cookie denial: Consent-O-Matic auto-rejects cookie banners. Firefox Total Cookie Protection on, with cookies and site data deleted on close (allow list for trusted sites).
 
-- Disk encryption, required to pass this tier: BitLocker or Device Encryption (Windows), LUKS2 (Linux), FileVault (macOS). Recovery key saved in Bitwarden.
+- Disk encryption, recommended for this tier: BitLocker or Device Encryption (Windows), LUKS2 (Linux), FileVault (macOS). OPSEC only checks whether it is on. It never turns it on for you, so you cannot be locked out by accident. If you turn it on yourself, save the recovery key in Bitwarden first.
 
 - Telemetry: O&O ShutUp10++ recommended preset on Windows; system settings on Linux and macOS. Advertising ID, diagnostics and activity history off.
 

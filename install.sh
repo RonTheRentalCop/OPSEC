@@ -9,6 +9,15 @@ BIN_DIR="$HOME/.local/bin"
 say()  { printf '%s\n' "$*"; }
 fail() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 
+use_latest_release() {
+  local dir="$1" latest
+  git -C "$dir" fetch --quiet --tags origin || return 1
+  latest="$(git -C "$dir" tag -l 'v*' --sort=-v:refname | head -n 1)"
+  [ -n "$latest" ] || return 1
+  git -C "$dir" checkout --quiet "$latest" || return 1
+  say "Using release $latest"
+}
+
 main() {
   if [ "$(id -u)" -eq 0 ]; then
     fail "do not run this installer as root or with sudo. It does not need it."
@@ -28,7 +37,10 @@ main() {
   elif [ -d "$INSTALL_DIR/.git" ]; then
     source_dir="$INSTALL_DIR"
     say "Updating OPSEC in $source_dir"
-    git -C "$source_dir" pull --ff-only
+    if ! use_latest_release "$source_dir"; then
+      say "No tagged release exists yet, so this uses the newest development code."
+      git -C "$source_dir" pull --ff-only
+    fi
   elif [ -e "$INSTALL_DIR" ]; then
     fail "$INSTALL_DIR already exists and is not an OPSEC download. Move it and try again."
   else
@@ -36,6 +48,9 @@ main() {
     say "Downloading OPSEC to $source_dir"
     mkdir -p "$(dirname "$source_dir")"
     git clone --depth 1 "$REPO_URL" "$source_dir"
+    if ! use_latest_release "$source_dir"; then
+      say "No tagged release exists yet, so this uses the newest development code."
+    fi
   fi
 
   [ -f "$source_dir/bin/opsec" ] || fail "the download looks incomplete (bin/opsec is missing)."

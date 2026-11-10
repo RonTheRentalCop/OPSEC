@@ -1,0 +1,85 @@
+name: checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shell syntax
+        run: |
+          for file in bin/opsec install.sh lib/*.sh configs/*.sh scripts/*.sh vm/*.sh; do
+            bash -n "$file"
+          done
+      - name: ShellCheck
+        run: |
+          shellcheck --severity=warning --shell=bash --exclude=SC1090,SC1091,SC2034 \
+            bin/opsec install.sh lib/*.sh configs/*.sh scripts/*.sh vm/*.sh
+      - name: Firefox policies are valid JSON
+        run: |
+          for file in configs/firefox/*.json; do
+            python3 -m json.tool "$file" >/dev/null
+          done
+      - name: Pinned signing keys still match
+        run: |
+          . lib/engine.sh
+          tmp="$(mktemp -d)"
+          fetch_pinned_key https://repository.mullvad.net/deb/mullvad-keyring.asc "$MULLVAD_KEY_FPR" "$tmp/mullvad"
+          fetch_pinned_key https://pkg.cloudflareclient.com/pubkey.gpg "$CLOUDFLARE_KEY_FPR" "$tmp/cloudflare"
+          fetch_pinned_key https://updates.signal.org/desktop/apt/keys.asc "$SIGNAL_KEY_FPR" "$tmp/signal"
+
+  dry-run:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Plans build for every tier
+        run: |
+          bin/opsec up 4 --dry-run
+          bin/opsec up 3 --warp --dry-run
+          bin/opsec up 2 --mullvad --dry-run
+          bin/opsec up 1 --mullvad --dry-run
+          bin/opsec up 0
+          bin/opsec status
+          bin/opsec down --dry-run
+
+  fedora:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Plans build for every tier
+        run: |
+          dnf install -y sudo util-linux procps-ng
+          useradd tester
+          chown -R tester .
+          sudo -u tester bin/opsec up 1 --mullvad --dry-run
+          sudo -u tester bin/opsec status
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $issues = Invoke-ScriptAnalyzer -Path windows/opsec.ps1 -Severity Error
+          $issues | Format-Table
+          if ($issues) { exit 1 }
+      - name: Plans build for every tier
+        shell: powershell
+        run: |
+          foreach ($tier in '4', '3', '2', '1') {
+            powershell -NoProfile -ExecutionPolicy Bypass -File windows/opsec.ps1 -Tier $tier -Vpn warp -DryRun
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
