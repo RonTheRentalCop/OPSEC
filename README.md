@@ -1,7 +1,7 @@
 # OPSEC
 OPSEC is an open source tool that sets up privacy and security on your computer, one level at a time. You pick a tier, from everyday safety (Tier 4) to full lockdown (Tier 0), and OPSEC applies the matching settings and tools for you.
 
-**Status: early development.** `opsec up` can apply Tiers 4 to 1 on macOS, Debian, Ubuntu and Fedora, and Tiers 4 to 2 on Windows. So far the tier steps have only been run as a preview (dry run) on macOS; the Linux and Windows versions have not been tested on real machines yet. The Tier 1 sealed VM is new and experimental: on an Apple Silicon Mac its build has been run as far as the Tor lockdown, the Tor Browser signature check and the leak tests, but a complete build and a desktop start have not been confirmed yet, and it has not been run on Linux at all. Try it on a spare computer first.
+**Status: early development.** `opsec up` can apply Tiers 4 to 1 on macOS, Debian, Ubuntu and Fedora, and Tiers 4 to 2 on Windows. So far the tier steps have only been run as a preview (dry run) on macOS; the Linux and Windows versions have not been tested on real machines yet. The Tier 1 sealed VM is new and experimental. It has been built and started on one Apple Silicon Mac, where its leak tests passed and Tor Browser inside it reached the Tor check page. It has not been run on Intel Macs or Linux. Try it on a spare computer first.
 
 Contributors are welcome. Message `courtleeoed` on Discord or open an issue.
 
