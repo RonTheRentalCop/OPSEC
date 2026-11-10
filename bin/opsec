@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+VERSION="0.0.1 (early development)"
+
+self="${BASH_SOURCE[0]}"
+while [ -L "$self" ]; do
+  target="$(readlink "$self")"
+  case "$target" in
+    /*) self="$target" ;;
+    *)  self="$(dirname "$self")/$target" ;;
+  esac
+done
+ROOT_DIR="$(cd "$(dirname "$self")/.." && pwd)"
+TIERS_DIR="$ROOT_DIR/tiers"
+
+show_help() {
+  cat <<'EOF'
+opsec - tiered privacy and security setup
+
+Tier 0 is the most locked down. Tier 4 is the everyday starting point.
+
+Usage:
+  opsec tiers      Explain the five tiers and who each one is for
+  opsec tier <n>   Show everything in one tier, from 0 to 4
+  opsec status     Check which protections are on        (not built yet)
+  opsec up <n>     Apply a tier, from 0 to 4             (not built yet)
+  opsec down       Undo the changes OPSEC made           (not built yet)
+  opsec version    Show the version
+  opsec help       Show this message
+
+This early version makes no changes to your computer.
+EOF
+}
+
+show_tiers() {
+  cat <<'EOF'
+Tier 0  Lockdown    For people at serious risk. Separates everything you do
+                    and leaves nothing behind.
+Tier 1  Anonymous   Hides who you are from the websites you visit and from
+                    anyone watching your connection.
+Tier 2  Hardened    Makes the computer much harder to break into, even if you
+                    open a bad file or plug in a bad USB stick.
+Tier 3  Private     Stops your internet provider, public Wi-Fi and advertisers
+                    from watching what you do. Protects a lost or stolen laptop.
+Tier 4  Hygiene     Everyone. Blocks ads, trackers, scams and common malware.
+
+Tier 0 is the strongest. Each tier includes the higher-numbered ones.
+The closer to Tier 0, the slower and less convenient things get.
+Most people only need Tier 4 or Tier 3.
+
+Run 'opsec tier <n>' to see everything in one tier.
+EOF
+}
+
+show_tier() {
+  case "${1:-}" in
+    0|1|2|3|4) ;;
+    *)
+      echo "Pick a tier from 0 to 4, for example: opsec tier 4" >&2
+      exit 1
+      ;;
+  esac
+  local file
+  file="$(ls "$TIERS_DIR"/tier"$1"-*.md 2>/dev/null | head -n 1)"
+  if [ -z "$file" ]; then
+    echo "Could not find the description for tier $1 in $TIERS_DIR" >&2
+    exit 1
+  fi
+  cat "$file"
+}
+
+not_built() {
+  echo "'opsec $1' is not built yet. Nothing was changed on your computer."
+  echo "Follow progress at https://github.com/RonTheRentalCop/OPSEC"
+  exit 2
+}
+
+case "${1:-help}" in
+  help|-h|--help)       show_help ;;
+  version|-v|--version) echo "opsec $VERSION" ;;
+  tiers)                show_tiers ;;
+  tier)                 show_tier "${2:-}" ;;
+  status|up|down)       not_built "$1" ;;
+  *)
+    echo "Unknown command: $1" >&2
+    echo "Run 'opsec help' to see what is available." >&2
+    exit 1
+    ;;
+esac
