@@ -1,6 +1,8 @@
 # OPSEC
 OPSEC is an open source tool that sets up privacy and security on your computer, one level at a time. You pick a tier, from everyday safety (Tier 4) to full lockdown (Tier 0), and OPSEC applies the matching settings and tools for you.
 
+[![Watch the video](https://youtube.com)](https://youtu.be/b3kNMt3jgnE)
+
 **Status: early development.** The tiers are the plan. The `opsec` command installs today and can explain the tiers, but it does not change any settings on your computer yet.
 
 Contributors are welcome. Message `courtleeoed` on Discord or open an issue.
