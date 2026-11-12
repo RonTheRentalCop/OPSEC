@@ -226,6 +226,9 @@ A peer-to-peer encrypted messenger with no user IDs and no central servers, rout
 - Performance: RSA-4096 keys are about 512 bytes and private-key operations are roughly 100 to 200 times slower than Ed25519. Because the keys are used only for identity, users won't notice the difference.
 - Metadata: encryption protects message content only. Hiding who talks to whom depends on the network layer (Tor or Yggdrasil, no user IDs, and rotating queue IDs).
 
+## AI disclosure
+Portions of this project's code and documentation were generated or assisted by AI tools, then reviewed by the maintainer. AI-assisted code can contain mistakes that look correct, and not every part has been tested on every supported system. Read what a command will do before you run it, and do not rely on this project where your safety depends on it without checking it yourself. See [Legal.md](./Legal.md).
+
 ## License
 This project is licensed under the GNU General Public License v3.0 (GPLv3). See the [LICENSE](./LICENSE) file for the full text.
 

@@ -120,8 +120,6 @@ AvoidDiskWrites 1
 EOF
 
   cat >/etc/nftables.conf <<EOF
-#!/usr/sbin/nft -f
-
 flush ruleset
 
 table inet opsec {
