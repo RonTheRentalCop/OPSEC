@@ -189,7 +189,7 @@ install_desktop() {
     dbus-x11 dbus-user-session libpam-systemd polkitd \
     adwaita-icon-theme fonts-dejavu-core fonts-liberation \
     libgtk-3-0t64 libdbus-glib-1-2 libxt6t64 libasound2t64 libx11-xcb1 \
-    gnupg xz-utils mat2 unattended-upgrades ||
+    gnupg xz-utils mat2 unattended-upgrades util-linux-extra ||
     die "could not install the desktop"
 }
 
@@ -312,6 +312,32 @@ APT::Periodic::Unattended-Upgrade "1";
 EOF
 }
 
+keep_clock_right() {
+  cat >/etc/systemd/system/opsec-clock.service <<'EOF'
+[Unit]
+Description=Set the clock from the virtual hardware clock
+
+[Service]
+Type=oneshot
+ExecStart=/usr/sbin/hwclock --hctosys --utc
+EOF
+  cat >/etc/systemd/system/opsec-clock.timer <<'EOF'
+[Unit]
+Description=Keep the clock right after the host computer sleeps
+
+[Timer]
+OnBootSec=30
+OnUnitActiveSec=60
+AccuracySec=5
+
+[Install]
+WantedBy=timers.target
+EOF
+  systemctl daemon-reload
+  systemctl enable opsec-clock.timer >/dev/null 2>&1 || die "could not enable the clock repair timer"
+  systemctl start opsec-clock.service || die "could not read the virtual hardware clock"
+}
+
 reduce_logs() {
   say "7/8 Turning off logs and history"
   mkdir -p /etc/systemd/journald.conf.d
@@ -376,6 +402,7 @@ main() {
   install_tor_browser
   configure_desktop
   seal_system
+  keep_clock_right
   reduce_logs
   self_test
   clean_up

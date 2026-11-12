@@ -21,16 +21,20 @@ Tier 1 no longer installs Tor software on your computer. Everything anonymous ha
 - No administrator: the desktop account has no password and no administrator rights, the administrator account is locked, and remote login is removed. Something that breaks out of the browser cannot change the firewall. Security updates install themselves through Tor.
 - No sharing: no shared folders, no shared clipboard, no USB pass-through, no microphone, no camera.
 - Few logs: the VM keeps system logs in memory only, keeps no shell history or recent-file lists, and writes no crash dumps. OPSEC itself keeps no record of what you run.
+- Clock: if the computer sleeps, the VM corrects its clock within a minute of waking, so Tor reconnects by itself.
 - Self-test: before the build is accepted, the VM proves that direct connections and name lookups are blocked and that Tor works. If any test fails, the VM is deleted.
 
 Commands:
 
 - `opsec vm create` builds it.
 - `opsec vm start` unlocks and opens it.
+- `opsec vm start --amnesic` opens it for one throwaway session. Everything done or saved in the VM that time, including bookmarks, downloads and updates, is discarded at shutdown. Start it the normal way now and then so security updates are kept.
 - `opsec vm status` shows whether it is built and whether it can start.
 - `opsec vm destroy` deletes it and everything inside.
 
 What the computer still shows: that QEMU and OPSEC are installed, that one large encrypted file exists, and whatever your shell history records. The VPN company can see that you use Tor, but not what you do.
+
+Known quirk: Tor Browser shows a yellow notice that it cannot communicate with the external Tor application. That is expected. The VM deliberately gives the browser no control over Tor, so the "New circuit" button and the circuit display do not work. Browsing is unaffected, and the notice can be closed.
 
 Not built yet: Windows (it gets a Whonix checklist instead), Tor bridges inside the VM, OnionShare, a messenger, and wallet software.
 

@@ -130,6 +130,12 @@ opsec vm create
 opsec vm start
 ```
 
+For a session that leaves nothing behind inside the VM, add `--amnesic`. Every change is discarded at shutdown:
+
+```bash
+opsec vm start --amnesic
+```
+
 - A firewall inside the VM drops everything that is not Tor. Apps that are not set up for Tor get no internet, and if Tor stops, everything stops.
 - The VPN on your computer must be connected before the VM is downloaded, built or started, so your network sees a VPN and never sees Tor.
 - The whole VM is one file encrypted with your passphrase. Tor Browser exists only inside it.

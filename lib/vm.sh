@@ -4,7 +4,9 @@ VM_DIR="${OPSEC_VM_DIR:-$HOME/.local/share/opsec-vm}"
 VM_DISK="$VM_DIR/disk.qcow2"
 VM_DISK_SIZE="24G"
 VM_IMAGE_URL="https://cloud.debian.org/images/cloud/trixie/latest"
+VM_SESSION="$VM_DIR/session.qcow2"
 VM_PASS=""
+VM_DRIVE_OPTIONS=""
 QEMU_ARGS=()
 
 vm_arch() {
@@ -208,7 +210,7 @@ vm_build_args() {
     -netdev "user,id=net0,ipv6=off"
     -device "virtio-net-pci,netdev=net0"
     -object "secret,id=disk0,file=/dev/fd/3"
-    -drive "if=virtio,format=qcow2,file=$2,encrypt.key-secret=disk0"
+    -drive "if=virtio,format=qcow2,file=$2,encrypt.key-secret=disk0$VM_DRIVE_OPTIONS"
     -monitor none
   )
   case "$mode" in
@@ -346,7 +348,25 @@ vm_create() {
   note "The sealed VM is ready. Start it with 'opsec vm start'."
 }
 
+vm_new_session() {
+  rm -f "$VM_SESSION"
+  qemu-img create -q -f qcow2 --object secret,id=disk0,file=/dev/fd/3 \
+    -b "$VM_DISK" -F qcow2 -o encrypt.format=luks,encrypt.key-secret=disk0 \
+    "$VM_SESSION" 3< <(printf '%s' "$VM_PASS") 2>/dev/null || return 1
+  chmod 600 "$VM_SESSION"
+}
+
 vm_start() {
+  local amnesic=0 arg
+  for arg in "$@"; do
+    case "$arg" in
+      --amnesic) amnesic=1 ;;
+      *)
+        echo "Usage: opsec vm start [--amnesic]" >&2
+        return 1
+        ;;
+    esac
+  done
   vm_check_tools || return 1
   if ! vm_exists; then
     echo "There is no sealed VM yet. Build it with 'opsec vm create'." >&2
@@ -355,15 +375,29 @@ vm_start() {
   vm_require_vpn || return 1
   vm_ask_passphrase "VM passphrase: " || return 1
 
-  local errors status
-  vm_build_args desktop "$VM_DISK"
+  local errors status disk="$VM_DISK"
+  VM_DRIVE_OPTIONS=""
+  rm -f "$VM_SESSION"
+  if [ "$amnesic" -eq 1 ]; then
+    if ! vm_new_session; then
+      VM_PASS=""
+      echo "Could not prepare the throwaway session. If the passphrase was wrong, try again." >&2
+      return 1
+    fi
+    disk="$VM_SESSION"
+    VM_DRIVE_OPTIONS=",backing.encrypt.key-secret=disk0"
+    echo "Amnesic session: everything you do or save in the VM this time is"
+    echo "thrown away when it shuts down, including bookmarks, downloads and updates."
+  fi
+  vm_build_args desktop "$disk"
   echo "Starting the VM. Shut it down from its own menu when you are done."
-  echo "Shut it down before this computer goes to sleep, or its clock falls"
-  echo "behind and Tor stops connecting."
+  echo "If this computer sleeps, the VM resets its clock within a minute of"
+  echo "waking and Tor reconnects by itself."
   vm_keep_awake "$$"
   status=0
   errors="$("$(vm_qemu)" "${QEMU_ARGS[@]}" 3< <(printf '%s' "$VM_PASS") 2>&1 >/dev/null)" || status=$?
   VM_PASS=""
+  rm -f "$VM_SESSION"
   if [ "$status" -ne 0 ]; then
     case "$errors" in
       *"Invalid password"*|*"cannot unlock"*) echo "That passphrase is wrong." >&2 ;;
@@ -432,7 +466,7 @@ opsec_vm() {
   fi
   case "$action" in
     create)  vm_create ;;
-    start)   vm_start ;;
+    start)   shift; vm_start "$@" ;;
     destroy) vm_destroy ;;
     status)  vm_status ;;
     *)
@@ -440,6 +474,8 @@ opsec_vm() {
 Usage:
   opsec vm create    Build the sealed, Tor-only virtual machine
   opsec vm start     Unlock and open it
+  opsec vm start --amnesic
+                     Open it, and throw away every change when it shuts down
   opsec vm status    Show whether it is built and whether it can start
   opsec vm destroy   Delete it and everything inside it
 EOF
